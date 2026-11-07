@@ -1,0 +1,57 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null",
+      "$u": {
+        ".write": "auth != null && auth.uid === $u",
+        ".validate": "newData.hasChildren(['uid','name']) && newData.child('uid').val() === $u",
+        "uid": { ".validate": "newData.isString()" },
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "partner": {
+      "$u": {
+        ".read": "auth != null && auth.uid === $u",
+        ".write": "auth != null && auth.uid === $u",
+        ".validate": "newData.isString()"
+      }
+    },
+    "inbox": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": { ".write": "auth != null && (auth.uid === $from || auth.uid === $to)" }
+      }
+    },
+    "links": {
+      "$room": {
+        ".read": "auth != null && $room.contains(auth.uid)",
+        ".write": "auth != null && $room.contains(auth.uid)",
+        ".validate": "newData.hasChildren(['from','to','status']) && $room.contains(newData.child('from').val()) && $room.contains(newData.child('to').val()) && ((newData.child('status').val() === 'pending' && newData.child('from').val() === auth.uid) || (newData.child('status').val() === 'accepted' && newData.child('to').val() === auth.uid))"
+      }
+    },
+    "messages": {
+      "$room": {
+        ".read": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'",
+        ".write": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'",
+        "$id": { ".validate": "newData.hasChildren(['uid','createdAt']) && newData.child('uid').val() === auth.uid" }
+      }
+    },
+    "posts": {
+      "$room": {
+        ".read": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'",
+        ".write": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'",
+        "$id": { ".validate": "newData.hasChildren(['uid','createdAt']) && newData.child('uid').val() === auth.uid" }
+      }
+    },
+    "calls": {
+      "$room": {
+        ".read": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'",
+        ".write": "auth != null && $room.contains(auth.uid) && root.child('links').child($room).child('status').val() === 'accepted'"
+      }
+    }
+  }
+}
