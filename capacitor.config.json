@@ -1,9 +1,0 @@
-{
-  "appId": "com.us.privatecouples",
-  "appName": "Us",
-  "webDir": "dist",
-  "backgroundColor": "#09090d",
-  "android": {
-    "allowMixedContent": false
-  }
-}
