@@ -1,0 +1,6 @@
+{
+  "rules": {
+    ".read": "auth != null && (auth.uid === 'REPLACE_WITH_FIRST_UID' || auth.uid === 'REPLACE_WITH_SECOND_UID')",
+    ".write": "auth != null && (auth.uid === 'REPLACE_WITH_FIRST_UID' || auth.uid === 'REPLACE_WITH_SECOND_UID')"
+  }
+}
