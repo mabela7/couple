@@ -1,50 +1,65 @@
-
-name: Build Android APK
-
+name: Build APK
+# The APK is only a thin shell that opens your hosted app (index.html on GitHub Pages).
+# Rebuild ONLY if you change this file. Editing index.html never needs a new APK.
 on:
   workflow_dispatch:
+    inputs:
+      app_url:
+        description: "Hosted app URL (leave empty = GitHub Pages of this repo)"
+        required: false
+        default: ""
   push:
-    branches:
-      - main
-
+    paths: [".github/workflows/android.yml"]
+permissions:
+  contents: read
 jobs:
-  build:
+  apk:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+          node-version: 20
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build web app
-        run: npm run build
-
-      - name: Install Capacitor Android
-        run: npx cap add android || true
-
-      - name: Sync Android
-        run: npx cap sync android
-
-      - name: Build APK
-        working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          java-version: "21"
+      - name: Build debug APK
+        env:
+          INPUT_URL: ${{ inputs.app_url }}
+        run: |
+          set -euo pipefail
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"; REPO="${GITHUB_REPOSITORY#*/}"
+          if [ -n "${INPUT_URL:-}" ]; then URL="$INPUT_URL"
+          elif [ "${REPO,,}" = "$OWNER.github.io" ]; then URL="https://$OWNER.github.io/"
+          else URL="https://$OWNER.github.io/$REPO/"; fi
+          echo "App URL: $URL"
+          mkdir shell && cd shell
+          npm init -y >/dev/null
+          npm i @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/filesystem@7 @capacitor/share@7 >/dev/null
+          mkdir www
+          cat > www/index.html <<'HTML'
+          <!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#0d0b11;color:#f4f0f6;font:16px system-ui;display:grid;place-items:center;height:100vh;margin:0">Loading…
+          HTML
+          cat > www/offline.html <<'HTML'
+          <!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#0d0b11;color:#f4f0f6;font:16px system-ui;display:grid;place-items:center;height:100vh;margin:0;text-align:center;padding:24px"><div><h2>You’re offline</h2><p style="color:#9a92a3">Connect to the internet, then reopen Us.</p></div>
+          HTML
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "com.us.privatecouples",
+            "appName": "Us",
+            "webDir": "www",
+            "backgroundColor": "#0d0b11",
+            "server": { "url": "$URL", "cleartext": false, "errorPath": "offline.html" },
+            "android": { "allowMixedContent": false }
+          }
+          JSON
+          npx cap add android
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-feature android:name="android.hardware.camera.any" android:required="false" />\n    <uses-feature android:name="android.hardware.microphone" android:required="false" />\n    <application|' "$M"
+          grep -c "RECORD_AUDIO" "$M"
+          cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Us.apk"
+      - uses: actions/upload-artifact@v4
         with:
-          name: couples-app-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          
+          name: us-apk
+          path: Us.apk
