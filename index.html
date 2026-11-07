@@ -68,17 +68,18 @@ label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
 </head>
 <body>
 <div id="app"></div><div id="ov"></div><div class="toast" id="toast"></div><div id="prog"></div>
+<script>
+window.showErr=function(m){var e=document.getElementById("errbar");if(!e){e=document.createElement("div");e.id="errbar";e.style.cssText="position:fixed;top:0;left:0;right:0;z-index:200;background:#c62a45;color:#fff;padding:10px 14px;font:13px system-ui;word-break:break-word";e.onclick=function(){e.remove()};document.body.appendChild(e)}e.textContent="\u26A0 "+m+" (tap to hide)"};
+addEventListener("error",function(e){showErr(e.message||"Script error")});
+addEventListener("unhandledrejection",function(e){showErr((e.reason&&e.reason.message)||String(e.reason))});
+setTimeout(function(){if(!window.__usLoaded)showErr("App code didn\u2019t load. Check your internet / try again.")},7000);
+</script>
 <script type="module">
+window.__usLoaded=1;
 /* ============ CONFIG — the only part you ever need to fill in ============ */
 const CONFIG = {
-  firebase: { apiKey: "AIzaSyAi27biKcUGvCB4kXsXEdgeq85JLBb7a_Y",
-  authDomain: "library-a60e3.firebaseapp.com",
-  databaseURL: "https://library-a60e3-default-rtdb.firebaseio.com",
-  projectId: "library-a60e3",
-  storageBucket: "library-a60e3.firebasestorage.app",
-  messagingSenderId: "933820691428",
-  appId: "1:933820691428:web:25dcddcfc078ac910acdf1" },
-  workerUrl: "PASTE",   // Cloudflare Worker URL (file sharing), e.g. https://us-private-media.you.workers.dev
+  firebase: { apiKey:"PASTE", authDomain:"PASTE", databaseURL:"PASTE", projectId:"PASTE", appId:"PASTE" },
+  cloudinary: { cloudName:"PASTE", uploadPreset:"PASTE" },   // file sharing (free, no card) — see README
   // STUN only works on some networks. For calls over mobile data add your own TURN here
   // (free key at metered.ca). The openrelay entry is a public best-effort fallback.
   ice: [
@@ -139,7 +140,7 @@ function searchUsers(list,q,selfUid){
 }
 
 /* ---------- state ---------- */
-const S={q:"",user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],tab:"chat",msgs:[],posts:[],hist:[],live:null,off:0,msgsLoaded:false,ready:false};
+const S={dbOn:false,q:"",user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],tab:"chat",msgs:[],posts:[],hist:[],live:null,off:0,msgsLoaded:false,ready:false};
 const uid=()=>S.user?.uid, pair=(a,b)=>[a,b].sort().join("_"), room=()=>pair(uid(),S.partnerUid), now=()=>Date.now()+S.off;
 const connected=()=>!!(S.partnerUid&&S.partner&&S.link?.status==="accepted");
 let subs=[],rsubs=[],lsub=null,roomOn=false,db,auth,pendingName=null;
@@ -185,6 +186,7 @@ async function start(user){
   pendingName=null;
   shell();
   on(".info/serverTimeOffset",v=>S.off=v||0);
+  on(".info/connected",v=>{S.dbOn=!!v;if(S.tab==="me")renderTab()});
   on("users",v=>{S.users=Object.values(v||{});const p=S.partnerUid&&S.users.find(u=>u.uid===S.partnerUid);if(p&&S.partner&&S.partner.name!==p.name){S.partner=p;renderTop()}renderResults()});
   on(`inbox/${uid()}`,v=>{S.incoming=Object.entries(v||{}).map(([u,x])=>({uid:u,name:x.name,ts:x.ts}));renderNav();if(!connected()||S.tab==="me")renderTab()});
   on(`partner/${uid()}`,pu=>{S.partnerUid=pu||null;watchLink()});
@@ -256,16 +258,18 @@ function renderResults(){
   const inc=new Set(S.incoming.map(r=>r.uid)),sent=S.link?.status==="pending"&&S.link.from===uid()?S.partnerUid:null;
   box.innerHTML=(q.trim()?"":`<h3>People on Us</h3>`)+(list.length?list.map(u=>`<div class="item">${av(u.name)}<div class="grow"><div class="ell"><b>${esc(u.name)}</b></div><div class="small mut">joined ${u.createdAt?new Date(u.createdAt).toLocaleDateString([],{month:"short",day:"numeric",year:"numeric"}):"recently"}</div></div>${sent===u.uid?`<span class="small mut">Requested</span>`:`<button class="btn sm" data-act="connect" data-uid="${u.uid}">${inc.has(u.uid)?"Accept":"Connect"}</button>`}</div>`).join(""):`<div class="hint">${q.trim()?`Nobody called “${esc(q.trim())}” yet.<br>Ask them to sign up — this list updates live.`:"No one else has signed up yet."}</div>`);
 }
+const withTimeout=(p,ms=8000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error("No reply from the database. Check databaseURL in CONFIG and that the rules are published.")),ms))]);
 async function connectTo(b){
   const r=S.incoming.find(x=>x.uid===b);if(r)return acceptReq(b);
-  const u=S.users.find(x=>x.uid===b);if(!u)return;
+  const u=S.users.find(x=>x.uid===b);if(!u)return toast("Couldn’t find that person. Close and reopen the app.");
+  toast("Sending request…");
   try{
-    if(S.partnerUid&&S.partnerUid!==b){await remove(ref(db,`inbox/${S.partnerUid}/${uid()}`)).catch(()=>{});await remove(ref(db,`links/${room()}`))}
+    if(S.partnerUid&&S.partnerUid!==b){await withTimeout(remove(ref(db,`inbox/${S.partnerUid}/${uid()}`)).catch(()=>{}));await withTimeout(remove(ref(db,`links/${room()}`)))}
     const rm=pair(uid(),b);
-    await set(ref(db,`links/${rm}`),{from:uid(),fromName:S.me.name,to:b,toName:u.name,status:"pending",ts:Date.now()});
-    await set(ref(db,`inbox/${b}/${uid()}`),{name:S.me.name,ts:Date.now()});
-    await set(ref(db,`partner/${uid()}`),b);toast(`Request sent to ${u.name}`);
-  }catch(e){toast(errMsg(e))}
+    await withTimeout(set(ref(db,`links/${rm}`),{from:uid(),fromName:S.me.name,to:b,toName:u.name,status:"pending",ts:Date.now()}));
+    await withTimeout(set(ref(db,`inbox/${b}/${uid()}`),{name:S.me.name,ts:Date.now()}));
+    await withTimeout(set(ref(db,`partner/${uid()}`),b));toast(`Request sent to ${u.name}`);
+  }catch(e){showErr(errMsg(e))}
 }
 async function acceptReq(from){
   try{
@@ -273,7 +277,7 @@ async function acceptReq(from){
     await update(ref(db,`links/${pair(uid(),from)}`),{status:"accepted"});
     await set(ref(db,`partner/${uid()}`),from);
     await remove(ref(db,`inbox/${uid()}/${from}`));toast("Connected 💗");
-  }catch(e){await remove(ref(db,`inbox/${uid()}/${from}`)).catch(()=>{});toast("That request is no longer available.")}
+  }catch(e){await remove(ref(db,`inbox/${uid()}/${from}`)).catch(()=>{});showErr("Accept failed: "+errMsg(e))}
 }
 async function unlink(){
   if(!confirm(`Disconnect from ${S.partner?.name}? Your chat history stays saved, but you’ll both need to reconnect.`))return;
@@ -306,26 +310,24 @@ function renderMsgs(first){
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.tab==="chat")renderMsgs();renderNav()});
 
 /* ---------- files (Cloudflare Worker + R2) ---------- */
-const blobs=new Map(),W=()=>CONFIG.workerUrl.replace(/\/$/,"");
+const blobs=new Map(),CL=()=>CONFIG.cloudinary&&CONFIG.cloudinary.cloudName!=="PASTE"&&CONFIG.cloudinary.uploadPreset!=="PASTE";
 function getFile(key){if(!blobs.has(key))blobs.set(key,fetchFile(key).catch(e=>{blobs.delete(key);throw e}));return blobs.get(key)}
-async function fetchFile(key){
-  if(!CONFIG.workerUrl||CONFIG.workerUrl==="PASTE")throw new Error("File sharing isn’t set up yet (Worker URL missing).");
-  const t=await S.user.getIdToken();const r=await fetch(`${W()}/file/${encodeURIComponent(key)}`,{headers:{Authorization:"Bearer "+t}});
-  if(!r.ok)throw new Error(r.status===404?"File not found.":"Couldn’t load the file ("+r.status+").");
+async function fetchFile(url){
+  const r=await fetch(url);if(!r.ok)throw new Error(r.status===404?"File not found.":"Couldn’t load the file ("+r.status+").");
   const blob=await r.blob();return{blob,url:URL.createObjectURL(blob)};
 }
-async function upload(file,name){
-  if(!CONFIG.workerUrl||CONFIG.workerUrl==="PASTE")throw new Error("File sharing isn’t set up yet (Worker URL missing).");
-  if(file.size>100*1048576)throw new Error("Files can be up to 100 MB.");
-  const t=await S.user.getIdToken(),key=`${room()}~${Date.now()}-${safe(name)}`;
-  await new Promise((res,rej)=>{const x=new XMLHttpRequest();x.open("PUT",`${W()}/upload/${encodeURIComponent(key)}`);
-    x.setRequestHeader("Authorization","Bearer "+t);x.setRequestHeader("Content-Type",file.type||"application/octet-stream");
+async function upload(file){
+  if(!CL())throw new Error("File sharing isn’t set up yet (Cloudinary missing in CONFIG).");
+  const lim=file.type.startsWith("video/")?100:10;
+  if(file.size>lim*1048576)throw new Error(`Max ${lim} MB for this kind of file.`);
+  const fd=new FormData();fd.append("file",file);fd.append("upload_preset",CONFIG.cloudinary.uploadPreset);
+  return new Promise((res,rej)=>{const x=new XMLHttpRequest();x.open("POST",`https://api.cloudinary.com/v1_1/${CONFIG.cloudinary.cloudName}/auto/upload`);
     x.upload.onprogress=e=>{if(e.lengthComputable)$("#prog").style.width=(e.loaded/e.total*100)+"%"};
-    x.onload=()=>x.status<300?res():rej(new Error(x.responseText||"Upload failed ("+x.status+")"));x.onerror=()=>rej(new Error("Network error while uploading."));x.send(file)});
-  return key;
+    x.onload=()=>{let j={};try{j=JSON.parse(x.responseText)}catch{}x.status<300&&j.secure_url?res(j.secure_url):rej(new Error(j.error?.message||"Upload failed ("+x.status+")"))};
+    x.onerror=()=>rej(new Error("Network error while uploading."));x.send(fd)});
 }
 async function shareFile(file,to,text="",kind="file",name=file.name){
-  try{toast("Sending…");const key=await upload(file,name);
+  try{toast("Sending…");const key=await upload(file);
     const m={uid:uid(),name:S.me.name,text,fileKey:key,fileName:name,mime:file.type||"",size:file.size,kind,createdAt:serverTimestamp()};
     await push(ref(db,`${to==="chat"?"messages":"posts"}/${room()}`),m);toast("Sent ✓");
   }catch(e){toast(e.message)}finally{$("#prog").style.width="0"}
@@ -509,7 +511,7 @@ function meView(v){
   v.innerHTML=`<div class="pad"><div class="card center">${av(S.me.name,"big")}<h2 style="margin-top:12px">${esc(S.me.name)}</h2><div class="mut small">${esc(S.user.email)}</div></div>
   ${S.incoming.length?`<h3>Requests</h3>${S.incoming.map(r=>`<div class="card row">${av(r.name)}<div class="grow"><b>${esc(r.name)}</b><div class="small mut">wants to connect</div></div><button class="btn sm" data-act="accept" data-uid="${r.uid}">Accept</button><button class="btn soft sm" data-act="decline" data-uid="${r.uid}">No</button></div>`).join("")}`:""}
   <h3>Your person</h3><div class="card">${connected()?`<div class="row">${av(S.partner.name)}<div class="grow"><b>${esc(S.partner.name)}</b><div class="small mut">Connected</div></div><button class="btn bad sm" data-act="unlink">Disconnect</button></div>`:`<p class="mut" style="margin:0 0 12px">Not connected yet.</p><button class="btn full" data-act="tab" data-tab="chat">Find your person</button>`}</div>
-  <h3>App</h3><div class="card"><button class="btn soft full" data-act="update">Check for updates</button><p class="small mut" style="margin:10px 0 0">Version ${esc(localStorage.getItem("seenHash")||"—")} · updates install by themselves when you open the app.</p></div>
+  <h3>App</h3><div class="card"><button class="btn soft full" data-act="update">Check for updates</button><p class="small mut" style="margin:10px 0 0">Database: ${S.dbOn?"connected ✓":"NOT connected ✗ (check databaseURL in CONFIG)"} · people found: ${S.users.length}</p><p class="small mut" style="margin:6px 0 0">Version ${esc(localStorage.getItem("seenHash")||"—")} · updates install by themselves when you open the app.</p></div>
   <button class="btn bad full" data-act="logout">Log out</button></div>`;
 }
 
@@ -538,7 +540,7 @@ const act={
   mute:(d,b)=>toggleTrack("a",b,"mic","mic"),cam:(d,b)=>toggleTrack("v",b,"video","video"),flip:flipCam,screen:shareScreen,
   rec:()=>C?.rec?stopRec():startRec()
 };
-document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();act[b.dataset.act]?.(b.dataset,b)});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();try{const f=act[b.dataset.act];if(!f)return showErr("Unknown button: "+b.dataset.act);const r=f(b.dataset,b);if(r&&r.catch)r.catch(x=>showErr(errMsg(x)))}catch(x){showErr(errMsg(x))}});
 </script>
 </body>
 </html>
