@@ -62,6 +62,21 @@ label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
 .ctrl button{width:56px;height:56px;border-radius:50%;background:#ffffff22;display:grid;place-items:center;backdrop-filter:blur(8px)}.ctrl button.off{background:#fff;color:#111}.ctrl button.end{background:#e5384f}.ctrl button.ok{background:#2fb866}
 .reqs:empty{display:none}.reqs{display:grid;gap:8px;padding:10px 12px;background:#2a1a33;border-bottom:1px solid var(--acc2)}.req{display:flex;align-items:center;gap:10px}.req b{display:block}
 [hidden]{display:none!important}.b audio{width:230px;max-width:100%;height:40px;display:block;margin-bottom:2px}.vn{color:#ff8a9b}
+.av{overflow:hidden}.av img{width:100%;height:100%;object-fit:cover;display:block}.av[data-act]{cursor:pointer}
+.b.media{background:none;padding:0;border-radius:0}.b.media small{color:var(--mut);padding:2px 4px}
+.mw{position:relative;display:inline-block;max-width:100%}.pic{display:block;max-width:100%;max-height:440px;width:auto;height:auto;border-radius:16px;min-width:90px;min-height:70px;background:#1b1622}video.pic{max-width:min(100%,320px)}
+.dlb{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;background:#000b;color:#fff;display:grid;place-items:center}
+.dlb2{width:36px;height:36px;border-radius:50%;background:#ffffff1f;display:grid;place-items:center;flex:none}
+.viewer{position:fixed;inset:0;z-index:55;background:#08060b;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.vbar{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.vbody{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:8px;min-height:0}.vbody.tl{display:block;padding:14px}
+.vbody img.full,.vbody video{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+pre.txt{white-space:pre-wrap;word-break:break-word;width:100%;margin:0;font:13px/1.55 ui-monospace,Menlo,monospace;color:var(--txt)}
+.act{display:flex;gap:8px;margin-top:10px}.act button{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:18px;background:var(--card2);color:var(--mut);font-size:14px}.act svg{width:18px;height:18px}
+.act button.on,.mini button.on{color:var(--bad)}.act button.on svg,.mini button.on svg{fill:var(--bad)}
+.cm{margin-top:12px}.cm.in{margin-left:12px;padding-left:10px;border-left:2px solid var(--line)}.cm .t{white-space:pre-wrap;margin:4px 0 6px}
+.mini{display:flex;gap:16px;font-size:13px;color:var(--mut)}.mini button{color:var(--mut);display:flex;gap:4px;align-items:center;padding:2px 0}.mini svg{width:16px;height:16px}
+.chip{display:inline-flex;gap:8px;align-items:center;background:var(--card2);border-radius:12px;padding:3px 10px;margin-bottom:6px}
 .toast{position:fixed;left:50%;bottom:140px;transform:translate(-50%,20px);background:#2b2433;border:1px solid var(--line);padding:11px 16px;border-radius:14px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:88vw;text-align:center;font-size:14px}.toast.show{opacity:1;transform:translate(-50%,0)}
 #prog{position:fixed;top:0;left:0;height:3px;background:var(--acc);width:0;z-index:99;transition:width .2s}
 .tile{display:flex;gap:12px;align-items:center;cursor:pointer}.ico{width:44px;height:44px;border-radius:12px;background:var(--card2);display:grid;place-items:center;flex:none}
@@ -71,7 +86,7 @@ label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
 <body>
 <div id="app"></div><div id="ov"></div><div class="toast" id="toast"></div><div id="prog"></div>
 <script>
-window.showErr=function(m){var e=document.getElementById("errbar");if(!e){e=document.createElement("div");e.id="errbar";e.style.cssText="position:fixed;top:0;left:0;right:0;z-index:200;background:#c62a45;color:#fff;padding:10px 14px;font:13px system-ui;word-break:break-word";e.onclick=function(){e.remove()};document.body.appendChild(e)}e.textContent="\u26A0 "+m+" (tap to hide)"};
+window.showErr=function(m){var e=document.getElementById("errbar");if(!e){e=document.createElement("div");e.id="errbar";e.style.cssText="position:fixed;top:0;left:0;right:0;z-index:200;background:#c62a45;color:#fff;padding:10px 14px;font:13px system-ui;word-break:break-word";e.onclick=function(){e.remove()};document.body.appendChild(e)}e.textContent="\u26A0 "+m;clearTimeout(window.__et);window.__et=setTimeout(function(){e.remove()},5000)};
 addEventListener("error",function(e){showErr(e.message||"Script error")});
 addEventListener("unhandledrejection",function(e){showErr((e.reason&&e.reason.message)||String(e.reason))});
 setTimeout(function(){if(!window.__usLoaded)showErr("App code didn\u2019t load. Check your internet / try again.")},7000);
@@ -120,12 +135,17 @@ const IC={
  end:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" transform="rotate(135 12 12)"/>',
  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+ x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ dl:'<path d="M12 3v12M7 11l5 5 5-5M5 21h14"/>',
  in:'<path d="M4 4l6 0M4 4v6M4 4l7 7M6 15h4l2 5-2.5 1.5"/>'
 };
 const ic=(n,x="")=>`<svg class="i ${x}" viewBox="0 0 24 24">${IC[n]}</svg>`;
 const icOff=n=>`<svg class="i" viewBox="0 0 24 24">${IC[n]}${IC.off}</svg>`;
 const hue=n=>{let h=0;for(const c of String(n||"?"))h=(h*31+c.codePointAt(0))%360;return h};
-const av=(n,c="")=>`<span class="av ${c}" style="--h:${hue(n)}">${esc([...String(n||"?").trim()][0]?.toUpperCase()||"?")}</span>`;
+const photoOf=u=>S.prof?.[u]?.photo||"";
+const thumb=(url,w)=>url&&url.includes("/image/upload/")?url.replace("/image/upload/",`/image/upload/c_fill,g_auto,w_${w},h_${w},q_auto/`):url;
+const av=(n,c="",u,click=true)=>{const ph=u?photoOf(u):"",at=click&&u?` data-act="profile" data-uid="${esc(u)}"`:"";
+  return ph?`<span class="av ${c}"${at}><img src="${esc(thumb(ph,c.includes("big")?400:128))}" alt=""></span>`:`<span class="av ${c}" style="--h:${hue(n)}"${at}>${esc([...String(n||"?").trim()][0]?.toUpperCase()||"?")}</span>`};
 const fmtT=t=>new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
 const sameDay=(a,b)=>a.toDateString()===b.toDateString();
 const dayLabel=t=>{const d=new Date(t);return sameDay(d,new Date())?"Today":sameDay(d,new Date(Date.now()-864e5))?"Yesterday":d.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})};
@@ -150,11 +170,11 @@ function searchUsers(list,q,selfUid){
 }
 
 /* ---------- state ---------- */
-const S={reqLoaded:false,dbOn:false,q:"",user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],tab:"chat",msgs:[],posts:[],hist:[],live:null,off:0,msgsLoaded:false,ready:false};
+const S={prof:{},comments:{},likes:{},thread:null,reqLoaded:false,dbOn:false,q:"",user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],tab:"chat",msgs:[],posts:[],hist:[],live:null,off:0,msgsLoaded:false,ready:false};
 const uid=()=>S.user?.uid, pair=(a,b)=>[a,b].sort().join("_"), room=()=>pair(uid(),S.partnerUid), now=()=>Date.now()+S.off;
 const connected=()=>!!(S.partnerUid&&S.partner&&S.link?.status==="accepted");
 let subs=[],rsubs=[],lsub=null,roomOn=false,db,auth,pendingName=null;
-const rf=p=>ref(db,String(p).startsWith(".info")?p:"usapp/"+p);
+const rf=p=>ref(db,/^(\.info|usx\/)/.test(String(p))?p:"usapp/"+p);
 function on(p,cb,arr=subs){const u=onValue(rf(p),s=>cb(s.val()),e=>{console.warn(p,e.code);if(e.code==="PERMISSION_DENIED"||/permission/i.test(e.message))showErr("Database refused to read /usapp/"+p.split("/")[0]+". Publish the Us rules block (rules-block.txt) in Firebase → Realtime Database → Rules.")});arr.push(u);return u}
 function onq(q,cb,arr){arr.push(onValue(q,s=>cb(s.val()),e=>{console.warn(e.code);showErr("Database refused to read. Publish the Us rules block (rules-block.txt) in Firebase → Rules.")}))}
 const stop=a=>{a.splice(0).forEach(f=>{try{f()}catch{}})};
@@ -188,7 +208,7 @@ function authView(){
       else await signInWithEmailAndPassword(auth,em,pw)}
     catch(x){pendingName=null;$("#er").textContent=errMsg(x);$("#as").disabled=false}};
 }
-function logout(){stop(subs);stop(rsubs);lsub?.();lsub=null;roomOn=false;endCallLocal();Object.assign(S,{user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],msgs:[],posts:[],hist:[],live:null,msgsLoaded:false,ready:false,reqLoaded:false})}
+function logout(){stop(subs);stop(rsubs);lsub?.();lsub=null;roomOn=false;endCallLocal();Object.assign(S,{user:null,me:null,users:[],partnerUid:null,partner:null,link:null,incoming:[],msgs:[],posts:[],hist:[],live:null,msgsLoaded:false,ready:false,reqLoaded:false,prof:{},comments:{},likes:{},thread:null})}
 
 /* ---------- session start ---------- */
 async function start(user){
@@ -201,12 +221,14 @@ async function start(user){
   on(".info/serverTimeOffset",v=>S.off=v||0);
   on(".info/connected",v=>{S.dbOn=!!v;if(S.tab==="me")renderTab()});
   on("users",v=>{S.users=Object.values(v||{});const p=S.partnerUid&&S.users.find(u=>u.uid===S.partnerUid);if(p&&S.partner&&S.partner.name!==p.name){S.partner=p;renderTop()}renderResults()});
+  on("usx/profiles",v=>{S.prof=v||{};refreshProfiles()});
   on(`inbox/${uid()}`,v=>{const had=new Set(S.incoming.map(x=>x.uid));S.incoming=Object.entries(v||{}).map(([u,x])=>({uid:u,name:x.name,ts:x.ts}));
     const n=S.incoming.find(x=>!had.has(x.uid));if(n&&S.reqLoaded)toast(`${n.name} wants to be your person`);S.reqLoaded=true;renderReqs();renderNav();if(!connected()||S.tab==="me")renderTab()});
   on(`partner/${uid()}`,pu=>{S.partnerUid=pu||null;watchLink()});
   setTimeout(()=>{if(!S.ready){S.ready=true;renderAll()}},4000);
   checkUpdate(false);
 }
+function refreshProfiles(){renderTop();renderReqs();renderResults();if(S.tab==="me")renderTab();else if(S.tab==="shared")renderFeed()}
 function watchLink(){
   lsub?.();lsub=null;stop(rsubs);roomOn=false;S.ready=!S.partnerUid;S.link=null;S.partner=null;S.msgs=[];S.posts=[];S.hist=[];S.live=null;S.msgsLoaded=false;
   if(!S.partnerUid){renderAll();return}
@@ -222,13 +244,15 @@ function watchLink(){
 function startRoom(){
   const r=room();
   onq(query(rf(`messages/${r}`),limitToLast(300)),v=>{
-    const prev=S.msgs.length;S.msgs=Object.values(v||{}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const prev=S.msgs.length;S.msgs=Object.entries(v||{}).map(([id,x])=>({...x,id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
     const last=S.msgs[S.msgs.length-1];
     if(S.msgsLoaded&&S.msgs.length>prev&&last&&last.uid!==uid()&&(S.tab!=="chat"||document.hidden))toast(`${S.partner?.name}: ${last.text||"sent a file"}`.slice(0,80));
     S.msgsLoaded=true;renderMsgs();renderNav();if(S.tab==="shared")renderFeed();
   },rsubs);
-  onq(query(rf(`posts/${r}`),limitToLast(100)),v=>{S.posts=Object.values(v||{});if(S.tab==="shared")renderFeed()},rsubs);
+  onq(query(rf(`posts/${r}`),limitToLast(100)),v=>{S.posts=Object.entries(v||{}).map(([id,x])=>({...x,id}));if(S.tab==="shared")renderFeed();if(S.thread)renderThread()},rsubs);
   onq(query(rf(`calls/${r}/history`),limitToLast(30)),v=>{S.hist=Object.values(v||{}).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));if(S.tab==="calls")renderHist()},rsubs);
+  on(`usx/comments/${r}`,v=>{S.comments={};for(const [pid,cs] of Object.entries(v||{}))S.comments[pid]=Object.entries(cs).map(([id,c])=>({...c,id}));if(S.tab==="shared")renderFeed();if(S.thread)renderThread()},rsubs);
+  on(`usx/likes/${r}`,v=>{S.likes=v||{};if(S.tab==="shared")renderFeed();if(S.thread)renderThread()},rsubs);
   on(`calls/${r}/live`,onLive,rsubs);
 }
 
@@ -241,12 +265,12 @@ function renderAll(){if(!$("#top"))return;renderTop();renderReqs();renderNav();r
 function renderReqs(){
   const r=$("#reqs");if(!r)return;
   const out=S.link&&S.link.status==="pending"&&S.link.from===uid()?S.partner:null;
-  r.innerHTML=S.incoming.map(q=>`<div class="req">${av(q.name)}<div class="grow"><b class="ell">${esc(q.name)}</b><span class="small mut">wants to be your person</span></div><button class="btn sm" data-act="accept" data-uid="${q.uid}">Accept</button><button class="btn soft sm" data-act="decline" data-uid="${q.uid}">Decline</button></div>`).join("")+
-   (out?`<div class="req">${av(out.name)}<div class="grow"><b class="ell">${esc(out.name)}</b><span class="small mut">Request sent — waiting for them to accept</span></div><button class="btn soft sm" data-act="cancel">Cancel</button></div>`:"");
+  r.innerHTML=S.incoming.map(q=>`<div class="req">${av(q.name,"",q.uid)}<div class="grow"><b class="ell">${esc(q.name)}</b><span class="small mut">wants to be your person</span></div><button class="btn sm" data-act="accept" data-uid="${q.uid}">Accept</button><button class="btn soft sm" data-act="decline" data-uid="${q.uid}">Decline</button></div>`).join("")+
+   (out?`<div class="req">${av(out.name,"",out.uid)}<div class="grow"><b class="ell">${esc(out.name)}</b><span class="small mut">Request sent — waiting for them to accept</span></div><button class="btn soft sm" data-act="cancel">Cancel</button></div>`:"");
 }
 function renderTop(){
   const t=$("#top");if(!t)return;
-  t.innerHTML=connected()?`${av(S.partner.name)}<h1 class="ell">${esc(S.partner.name)}<small>${S.live&&S.live.status==="active"?"In a call":"Your person"}</small></h1><button class="ib" data-act="call" data-type="audio" aria-label="Voice call">${ic("phone")}</button><button class="ib acc" data-act="call" data-type="video" aria-label="Video call">${ic("video")}</button>`:`<h1>us<span style="color:var(--acc)">.</span></h1>`;
+  t.innerHTML=connected()?`${av(S.partner.name,"",S.partner.uid)}<h1 class="ell">${esc(S.partner.name)}<small>${S.live&&S.live.status==="active"?"In a call":"Your person"}</small></h1><button class="ib" data-act="call" data-type="audio" aria-label="Voice call">${ic("phone")}</button><button class="ib acc" data-act="call" data-type="video" aria-label="Video call">${ic("video")}</button>`:`<h1>us<span style="color:var(--acc)">.</span></h1>`;
 }
 const unread=()=>{if(!connected())return 0;const lr=+localStorage.getItem("lr_"+room())||0;return S.msgs.filter(m=>m.uid!==uid()&&(m.createdAt||0)>lr).length};
 function renderNav(){
@@ -273,7 +297,7 @@ function renderResults(){
   const box=$("#res");if(!box||!$("#sq"))return;
   const q=$("#sq").value,list=searchUsers(S.users,q,uid());
   const inc=new Set(S.incoming.map(r=>r.uid)),sent=S.link?.status==="pending"&&S.link.from===uid()?S.partnerUid:null;
-  box.innerHTML=(q.trim()?"":`<h3>People on Us</h3>`)+(list.length?list.map(u=>`<div class="item">${av(u.name)}<div class="grow"><div class="ell"><b>${esc(u.name)}</b></div><div class="small mut">joined ${u.createdAt?new Date(u.createdAt).toLocaleDateString([],{month:"short",day:"numeric",year:"numeric"}):"recently"}</div></div>${sent===u.uid?`<span class="small mut">Requested</span>`:`<button class="btn sm" data-act="connect" data-uid="${u.uid}" data-name="${esc(u.name)}">${inc.has(u.uid)?"Accept":"Connect"}</button>`}</div>`).join(""):`<div class="hint">${q.trim()?`Nobody called “${esc(q.trim())}” yet.<br>Ask them to sign up — this list updates live.`:"No one else has signed up yet."}</div>`);
+  box.innerHTML=(q.trim()?"":`<h3>People on Us</h3>`)+(list.length?list.map(u=>`<div class="item">${av(u.name,"",u.uid)}<div class="grow"><div class="ell"><b>${esc(u.name)}</b></div><div class="small mut">joined ${u.createdAt?new Date(u.createdAt).toLocaleDateString([],{month:"short",day:"numeric",year:"numeric"}):"recently"}</div></div>${sent===u.uid?`<span class="small mut">Requested</span>`:`<button class="btn sm" data-act="connect" data-uid="${u.uid}" data-name="${esc(u.name)}">${inc.has(u.uid)?"Accept":"Connect"}</button>`}</div>`).join(""):`<div class="hint">${q.trim()?`Nobody called “${esc(q.trim())}” yet.<br>Ask them to sign up — this list updates live.`:"No one else has signed up yet."}</div>`);
 }
 const withTimeout=(p,ms=8000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error("No reply from the database. Check databaseURL in CONFIG and that the rules are published.")),ms))]);
 async function connectTo(b,name){
@@ -309,21 +333,33 @@ function chatView(v){
     try{await push(rf(`messages/${room()}`),{uid:uid(),name:S.me.name,text:text.slice(0,4000),createdAt:serverTimestamp()})}catch(x){i.value=text;showErr("Message not sent: "+errMsg(x))}};
   renderMsgs(true);vnUI(!!VN);
 }
+const EXT=n=>(String(n||"").split(".").pop()||"").toLowerCase();
+const TEXTX=/^(txt|md|csv|tsv|json|log|xml|yml|yaml|ini|js|ts|css|html|py|java|c|cpp|h|sh|sql|srt|conf)$/;
+function kindOf(m){const mime=m.mime||"",e=EXT(m.fileName);
+  if(m.kind==="voice")return"voice";
+  if(mime.startsWith("image/")||/^(png|jpe?g|gif|webp|bmp|avif|heic)$/.test(e))return"image";
+  if(mime.startsWith("video/")||/^(mp4|webm|mov|m4v|mkv|3gp)$/.test(e))return"video";
+  if(mime.startsWith("audio/")||/^(mp3|m4a|wav|ogg|aac|opus)$/.test(e))return"audio";
+  if(mime.startsWith("text/")||mime==="application/json"||TEXTX.test(e))return"text";
+  if(mime==="application/pdf"||e==="pdf")return"pdf";
+  return"file"}
 function fileBlock(m){
-  if(m.kind==="voice")return `<audio controls preload="metadata" src="${esc(m.fileKey)}"></audio>`;
-  const img=(m.mime||"").startsWith("image/");
-  return img?`<img class="thumb" data-act="open" data-key="${esc(m.fileKey)}" data-name="${esc(m.fileName)}" alt="photo">`
-   :`<div class="file" data-act="open" data-key="${esc(m.fileKey)}" data-name="${esc(m.fileName)}">${ic("file")}<div class="grow"><div class="ell">${esc(m.fileName)}</div><div class="small" style="opacity:.7">${m.size?size(m.size):"Tap to open"}</div></div></div>`;
+  const k=kindOf(m),u=esc(m.fileKey),n=esc(m.fileName||"file"),a=`data-key="${u}" data-name="${n}" data-mime="${esc(m.mime||"")}"`;
+  const dl=`<button class="dlb" data-act="dl" ${a} aria-label="Download">${ic("dl")}</button>`;
+  if(k==="voice")return `<audio controls preload="metadata" src="${u}"></audio>`;
+  if(k==="image")return `<div class="mw"><img class="pic" loading="lazy" src="${u}" data-act="open" ${a} alt="">${dl}</div>`;
+  if(k==="video")return `<div class="mw"><video class="pic" controls preload="metadata" playsinline src="${u}#t=0.1"></video>${dl}</div>`;
+  return `<div class="file" data-act="open" ${a}>${ic(k==="audio"?"mic":"file")}<div class="grow"><div class="ell">${n}</div><div class="small" style="opacity:.7">${m.size?size(m.size):"Tap to preview"}</div></div><span class="dlb2" data-act="dl" ${a} aria-label="Download">${ic("dl")}</span></div>`;
 }
 function renderMsgs(first){
   const l=$("#msgs");if(!l)return;
   const near=first||l.scrollHeight-l.scrollTop-l.clientHeight<140;
   let last="",h="";
   for(const m of S.msgs){const t=m.createdAt||now(),d=dayLabel(t);if(d!==last){h+=`<div class="day">${d}</div>`;last=d}
-    h+=`<div class="b ${m.uid===uid()?"me":""}">${m.fileKey?fileBlock(m):""}${m.text?esc(m.text):""}<small>${fmtT(t)}</small></div>`}
+    const media=m.fileKey&&!m.text&&["image","video"].includes(kindOf(m));
+    h+=`<div class="b ${m.uid===uid()?"me":""} ${media?"media":""}">${m.fileKey?fileBlock(m):""}${m.text?esc(m.text):""}<small>${fmtT(t)}</small></div>`}
   l.innerHTML=h||`<div class="hint">No messages yet.<br>Say hi to ${esc(S.partner?.name||"them")} 👋</div>`;
   if(near)l.scrollTop=l.scrollHeight;
-  $$("img[data-key]",l).forEach(i=>getFile(i.dataset.key).then(f=>i.src=f.url).catch(()=>i.alt="Couldn’t load"));
   if(S.tab==="chat"&&!document.hidden&&S.msgs.length)localStorage.setItem("lr_"+room(),Math.max(...S.msgs.map(m=>m.createdAt||0)));
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.tab==="chat")renderMsgs();renderNav()});
@@ -352,15 +388,24 @@ async function shareFile(file,to,text="",kind="file",name=file.name,extra={}){
   }catch(e){toast(e.message)}finally{$("#prog").style.width="0"}
 }
 function pick(to,text=""){const i=document.createElement("input");i.type="file";i.onchange=()=>{const f=i.files?.[0];if(f)shareFile(f,to,text)};i.click()}
-async function openFile(key,name){
-  const o=$("#ov");o.innerHTML=`<div class="ov"><div class="sheet"><p class="mut center">Loading…</p></div></div>`;
-  const close=()=>o.innerHTML="";o.firstChild.onclick=e=>{if(e.target===o.firstChild)close()};
-  try{
-    const {blob,url}=await getFile(key),t=blob.type||"";
-    const body=t.startsWith("image/")?`<img src="${url}">`:t.startsWith("video/")?`<video src="${url}" controls playsinline></video>`:t.startsWith("audio/")?`<audio src="${url}" controls style="width:100%"></audio>`:t==="application/pdf"?`<iframe src="${url}"></iframe>`:`<div class="hint">${ic("file")}<br>No preview for this type.</div>`;
-    $(".sheet",o).innerHTML=`<div class="row" style="margin-bottom:12px"><b class="grow ell">${esc(name)}</b></div>${body}<div class="row" style="margin-top:14px"><button class="btn full" id="sv">Save / share</button><button class="btn soft" id="fclose">Close</button></div>`;
-    $("#fclose").onclick=close;$("#sv").onclick=()=>saveBlob(blob,name);
-  }catch(e){$(".sheet",o).innerHTML=`<p class="center">${esc(e.message)}</p><button class="btn soft full" id="fclose">Close</button>`;$("#fclose").onclick=close}
+const closeOv=()=>{S.thread=null;$("#ov").innerHTML=""};
+function viewer(title,body,dl,cls=""){
+  $("#ov").innerHTML=`<div class="viewer"><div class="vbar"><button class="ib" id="vx" aria-label="Close">${ic("x")}</button><b class="grow ell">${esc(title)}</b>${dl?`<button class="ib acc" id="vdl" aria-label="Download">${ic("dl")}</button>`:""}</div><div class="vbody ${cls}" id="vb">${body}</div></div>`;
+  $("#vx").onclick=closeOv;if(dl)$("#vdl").onclick=dl;guard();
+}
+async function downloadFile(key,name){toast("Preparing download…");try{const {blob}=await getFile(key);await saveBlob(blob,name||"file")}catch(e){showErr("Download failed: "+e.message)}}
+async function openFile(key,name,mime=""){
+  const k=kindOf({mime,fileName:name}),dl=()=>downloadFile(key,name),u=esc(key),vb=h=>{const b=$("#vb");if(b)b.innerHTML=h;return b};
+  if(k==="image")return viewer(name,`<img class="full" src="${u}" alt="">`,dl);
+  if(k==="video")return viewer(name,`<video src="${u}" controls autoplay playsinline></video>`,dl);
+  if(k==="audio"||k==="voice")return viewer(name,`<audio src="${u}" controls autoplay style="width:100%"></audio>`,dl);
+  if(k==="text"){viewer(name,`<div class="hint">Loading…</div>`,dl);
+    try{const {blob}=await getFile(key);let t=await blob.text();const cut=t.length>300000;if(cut)t=t.slice(0,300000);
+      vb(`<pre class="txt">${esc(t)}</pre>${cut?`<p class="small mut">Preview cut at 300,000 characters — download for the rest.</p>`:""}`)?.classList.add("tl")}
+    catch{vb(`<div class="hint">Couldn’t preview this file.<br>Use the download button.</div>`)}return}
+  if(k==="pdf"&&!window.Capacitor?.isNativePlatform?.()){viewer(name,`<div class="hint">Loading…</div>`,dl);
+    try{const {url}=await getFile(key);vb(`<iframe src="${url}" style="width:100%;height:100%;border:0;background:#fff;border-radius:8px"></iframe>`)}catch{vb(`<div class="hint">Couldn’t preview this PDF.<br>Use the download button.</div>`)}return}
+  viewer(name,`<div class="hint">${ic("file")}<br>${k==="pdf"?"PDFs can’t be previewed inside the app on Android.":"No preview for this file type."}<br><br><button class="btn" id="vdl2">Download</button></div>`,dl);$("#vdl2").onclick=dl;
 }
 const b64=b=>new Promise((r,j)=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(",")[1]);f.onerror=j;f.readAsDataURL(b)});
 async function saveBlob(blob,name){
@@ -425,11 +470,50 @@ function sharedView(v){
     try{await push(rf(`posts/${room()}`),{uid:uid(),name:S.me.name,text:t.slice(0,4000),createdAt:serverTimestamp()})}catch(x){$("#pt").value=t;showErr("Not shared: "+errMsg(x))}};
   renderFeed();
 }
-function renderFeed(){
-  const f=$("#feed");if(!f)return;
-  const items=[...S.posts,...S.msgs.filter(m=>m.fileKey&&m.kind!=="voice")].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  f.innerHTML=items.length?items.map(p=>`<div class="card"><div class="row" style="margin-bottom:8px">${av(p.name,"sm")}<div class="grow"><b>${esc(p.uid===uid()?"You":p.name)}</b> <span class="small mut">· ${when(p.createdAt||now())}</span></div></div>${p.text?`<div style="white-space:pre-wrap;margin-bottom:${p.fileKey?8:0}px">${esc(p.text)}</div>`:""}${p.fileKey?`<div class="tile" data-act="open" data-key="${esc(p.fileKey)}" data-name="${esc(p.fileName)}"><div class="ico">${ic(p.kind==="recording"?"video":"file")}</div><div class="grow"><div class="ell">${esc(p.fileName)}</div><div class="small mut">${p.size?size(p.size):""} · tap to open</div></div></div>`:""}</div>`).join(""):`<div class="hint">Nothing shared yet.<br>Notes, photos and call recordings will live here.</div>`;
+const feedItems=()=>[...S.posts,...S.msgs.filter(m=>m.fileKey&&m.kind!=="voice")].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+const likeInfo=t=>{const l=S.likes[t]||{};return{n:Object.keys(l).length,me:!!l[uid()]}};
+function postHtml(p,full){
+  const li=likeInfo(p.id),nc=(S.comments[p.id]||[]).length;
+  return `<div class="row" style="margin-bottom:8px">${av(p.name,"sm",p.uid,!full)}<div class="grow"><b>${esc(p.uid===uid()?"You":p.name)}</b> <span class="small mut">· ${when(p.createdAt||now())}</span></div></div>${p.text?`<div style="white-space:pre-wrap;margin-bottom:${p.fileKey?8:0}px">${esc(p.text)}</div>`:""}${p.fileKey?fileBlock(p):""}<div class="act"><button class="${li.me?"on":""}" data-act="lk" data-t="${p.id}" aria-label="Like">${ic("heart")}${li.n||""}</button>${full?"":`<button data-act="thread" data-id="${p.id}">${ic("chat")}${nc?nc+" · ":""}Reply</button>`}</div>`;
 }
+function renderFeed(){
+  const f=$("#feed");if(!f)return;const it=feedItems();
+  f.innerHTML=it.length?it.map(p=>`<div class="card">${postHtml(p)}</div>`).join(""):`<div class="hint">Nothing shared yet.<br>Notes, photos and call recordings will live here.</div>`;
+}
+function openThread(id){
+  S.thread={id,reply:null};
+  $("#ov").innerHTML=`<div class="viewer"><div class="vbar"><button class="ib" id="vx" aria-label="Close">${ic("x")}</button><b class="grow">Replies</b></div><div class="vbody tl" id="tl"></div><form class="composer" id="tf"><div class="grow" style="min-width:0"><div id="rt"></div><input id="ti" placeholder="Write a reply…" autocomplete="off" enterkeyhint="send"></div><button class="ib acc" aria-label="Send">${ic("send")}</button></form></div>`;
+  $("#vx").onclick=closeOv;$("#tf").onsubmit=sendReply;guard();renderThread(true);
+}
+function renderThread(first){
+  const t=S.thread,l=$("#tl");if(!t||!l)return;
+  const p=[...S.posts,...S.msgs].find(x=>x.id===t.id);if(!p){if(!first)closeOv();return}
+  const near=l.scrollHeight-l.scrollTop-l.clientHeight<120;
+  const cs=S.comments[t.id]||[],ids=new Set(cs.map(c=>c.id)),kids={};
+  cs.forEach(c=>{const k=ids.has(c.parent)?c.parent:"";(kids[k]=kids[k]||[]).push(c)});
+  const rec=(k,d)=>(kids[k]||[]).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(c=>{const li=likeInfo(c.id);
+    return `<div class="cm ${d>0&&d<4?"in":""}"><div class="row">${av(c.name,"sm",c.uid,false)}<b>${esc(c.uid===uid()?"You":c.name)}</b><span class="small mut">${when(c.createdAt||now())}</span></div><div class="t">${esc(c.text)}</div><div class="mini"><button class="${li.me?"on":""}" data-act="lk" data-t="${c.id}" aria-label="Like">${ic("heart")}${li.n||""}</button><button data-act="rp" data-c="${c.id}" data-n="${esc(c.name)}">Reply</button></div>${rec(c.id,d+1)}</div>`}).join("");
+  l.innerHTML=`<div class="card" style="margin:0 0 6px">${postHtml(p,true)}</div><h3>${cs.length?cs.length+(cs.length>1?" replies":" reply"):"No replies yet"}</h3>${rec("",0)}`;
+  $("#rt").innerHTML=t.reply?`<span class="chip small">Replying to ${esc(t.reply.name)} <button type="button" data-act="rpx" aria-label="Cancel reply">✕</button></span>`:"";
+  if(!first&&near)l.scrollTop=l.scrollHeight;
+}
+async function sendReply(e){
+  e.preventDefault();const t=S.thread;if(!t)return;const i=$("#ti"),text=i.value.trim();if(!text)return;i.value="";i.focus();
+  try{await push(rf(`usx/comments/${room()}/${t.id}`),{uid:uid(),name:S.me.name,text:text.slice(0,2000),...(t.reply?{parent:t.reply.id}:{}),createdAt:serverTimestamp()});
+    t.reply=null;renderThread();const l=$("#tl");if(l)l.scrollTop=l.scrollHeight}catch(x){i.value=text;showErr("Reply not sent: "+errMsg(x))}
+}
+async function toggleLike(t){const r=rf(`usx/likes/${room()}/${t}/${uid()}`);try{likeInfo(t).me?await remove(r):await set(r,true)}catch(e){showErr("Like failed: "+errMsg(e))}}
+
+/* ---------- profiles ---------- */
+const userName=u=>u===uid()?S.me.name:(S.users.find(x=>x.uid===u)?.name||S.partner?.name||"Photo");
+function openProfile(u){
+  const me=u===uid(),p=S.prof[u]||{},name=userName(u),big=p.photo?`<span class="av big" data-act="viewpic" data-uid="${esc(u)}" style="cursor:pointer"><img src="${esc(thumb(p.photo,400))}" alt=""></span>`:av(name,"big");
+  const o=$("#ov");o.innerHTML=`<div class="ov"><div class="sheet center"><div style="display:grid;justify-items:center;gap:8px;margin-bottom:16px">${big}<h2 style="margin:6px 0 0">${esc(name)}</h2><p class="mut" style="white-space:pre-wrap;margin:0">${esc(p.bio||"No bio yet.")}</p></div>${me?`<button class="btn full" id="pe" style="margin-bottom:8px">Edit profile</button>`:""}<button class="btn soft full" id="px">Close</button></div></div>`;
+  o.firstChild.onclick=e=>{if(e.target===o.firstChild)closeOv()};$("#px").onclick=closeOv;if(me)$("#pe").onclick=()=>{closeOv();act.tab({tab:"me"})};guard();
+}
+function pickPhoto(){const i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=async()=>{const f=i.files?.[0];if(!f)return;
+  try{toast("Uploading photo…");const url=await upload(f);await update(rf(`usx/profiles/${uid()}`),{photo:url});toast("Profile photo updated ✓")}catch(e){showErr("Photo failed: "+(e.message||errMsg(e)))}finally{$("#prog").style.width="0"}};i.click()}
+async function saveBio(){try{await update(rf(`usx/profiles/${uid()}`),{bio:$("#bio").value.trim().slice(0,200)});toast("Bio saved ✓")}catch(e){showErr("Bio not saved: "+errMsg(e))}}
 
 /* ---------- calls ---------- */
 function callsView(v){
@@ -456,7 +540,7 @@ function onLive(l){
 }
 function incomingUI(l){
   if($("#inc"))return;
-  const o=document.createElement("div");o.id="inc";o.className="call";o.innerHTML=`<div class="cinfo">${av(l.fromName,"big")}<h2>${esc(l.fromName||"Your person")}</h2><div class="mut">Incoming ${l.type==="video"?"video":"voice"} call…</div></div><div class="ctrl"><button class="end" data-act="decline">${ic("end")}</button><button class="ok" data-act="answer">${ic(l.type==="video"?"video":"phone")}</button></div>`;
+  const o=document.createElement("div");o.id="inc";o.className="call";o.innerHTML=`<div class="cinfo">${av(l.fromName,"big",l.from,false)}<h2>${esc(l.fromName||"Your person")}</h2><div class="mut">Incoming ${l.type==="video"?"video":"voice"} call…</div></div><div class="ctrl"><button class="end" data-act="decline">${ic("end")}</button><button class="ok" data-act="answer">${ic(l.type==="video"?"video":"phone")}</button></div>`;
   document.body.append(o);ring(true);guard();setTimeout(()=>{if($("#inc")&&!C)hideIncoming()},60000);
 }
 function hideIncoming(){$("#inc")?.remove();if(!C)ring(false)}
@@ -464,7 +548,7 @@ function hideIncoming(){$("#inc")?.remove();if(!C)ring(false)}
 function callUI(name,type){
   const o=document.createElement("div");o.id="cl";o.className="call "+(type==="video"?"":"audio");
   o.innerHTML=`<video id="rv" autoplay playsinline></video><video id="lv" autoplay muted playsinline></video><div class="rec" id="rc" hidden>● Recording</div>
-  <div class="cinfo">${av(name,"big")}<h2>${esc(name)}</h2><div id="cs" class="mut">Calling…</div></div>
+  <div class="cinfo">${av(name,"big",S.partnerUid,false)}<h2>${esc(name)}</h2><div id="cs" class="mut">Calling…</div></div>
   <div class="ctrl"><button data-act="mute" id="bm">${ic("mic")}</button>${type==="video"?`<button data-act="cam" id="bc">${ic("video")}</button><button data-act="flip">${ic("flip")}</button>`:""}${navigator.mediaDevices?.getDisplayMedia&&type==="video"?`<button data-act="screen" id="bs">${ic("screen")}</button>`:""}<button data-act="rec" id="br">${ic("rec")}</button><button class="end" data-act="hang">${ic("end")}</button></div>`;
   document.body.append(o);guard();
 }
@@ -574,8 +658,10 @@ function stopRec(){const r=C?.rec;if(!r)return;C.rec=null;try{r.state!=="inactiv
 
 /* ---------- me ---------- */
 function meView(v){
-  v.innerHTML=`<div class="pad"><div class="card center">${av(S.me.name,"big")}<h2 style="margin-top:12px">${esc(S.me.name)}</h2><div class="mut small">${esc(S.user.email)}</div></div>
-  <h3>Your person</h3><div class="card">${connected()?`<div class="row">${av(S.partner.name)}<div class="grow"><b>${esc(S.partner.name)}</b><div class="small mut">Connected</div></div><button class="btn bad sm" data-act="unlink">Disconnect</button></div>`:`<p class="mut" style="margin:0 0 12px">Not connected yet.</p><button class="btn full" data-act="tab" data-tab="chat">Find your person</button>`}</div>
+  const pr=S.prof[uid()]||{};
+  v.innerHTML=`<div class="pad"><div class="card center"><div style="display:grid;justify-items:center;gap:6px">${pr.photo?`<span class="av big" data-act="viewpic" data-uid="${esc(uid())}" style="cursor:pointer"><img src="${esc(thumb(pr.photo,400))}" alt=""></span>`:av(S.me.name,"big")}<h2 style="margin:6px 0 0">${esc(S.me.name)}</h2><div class="mut small">${esc(S.user.email)}</div></div><button class="btn soft sm" data-act="photo" style="margin-top:12px">${pr.photo?"Change photo":"Add photo"}</button></div>
+  <h3>Bio</h3><div class="card"><textarea id="bio" rows="3" maxlength="200" placeholder="Tell them something about you…">${esc(pr.bio||"")}</textarea><button class="btn sm" data-act="savebio" style="margin-top:10px">Save bio</button></div>
+  <h3>Your person</h3><div class="card">${connected()?`<div class="row">${av(S.partner.name,"",S.partner.uid)}<div class="grow"><b>${esc(S.partner.name)}</b><div class="small mut">Connected</div></div><button class="btn bad sm" data-act="unlink">Disconnect</button></div>`:`<p class="mut" style="margin:0 0 12px">Not connected yet.</p><button class="btn full" data-act="tab" data-tab="chat">Find your person</button>`}</div>
   <h3>App</h3><div class="card"><button class="btn soft full" data-act="update">Check for updates</button><button class="btn soft full" data-act="test" style="margin-top:8px">Run connection test</button><p class="small mut" style="margin:10px 0 0">Database: ${S.dbOn?"connected ✓":"NOT connected ✗ (check databaseURL in CONFIG)"} · people found: ${S.users.length}</p><p class="small mut" style="margin:6px 0 0">Version ${esc(localStorage.getItem("seenHash")||"—")} · updates install by themselves when you open the app.</p></div>
   <button class="btn bad full" data-act="logout">Log out</button></div>`;
 }
@@ -590,7 +676,7 @@ async function checkUpdate(manual){
 
 /* ---------- android back button: don't kill a call ---------- */
 function guard(){try{history.pushState({g:1},"")}catch{}}
-addEventListener("popstate",()=>{if(C)guard();else if($("#inc"))guard();else if($("#ov").firstChild)$("#ov").innerHTML=""});
+addEventListener("popstate",()=>{if(C)guard();else if($("#inc"))guard();else if($("#ov").firstChild)closeOv()});
 
 /* ---------- click router ---------- */
 const act={
@@ -600,7 +686,10 @@ const act={
   cancel:async()=>{const pu=S.partnerUid;await remove(rf(`inbox/${pu}/${uid()}`)).catch(()=>{});await remove(rf(`links/${room()}`)).catch(()=>{})},
   unlink,logout:()=>signOut(auth),update:()=>checkUpdate(true),
   attach:d=>{const t=d.to==="post"?($("#pt")?.value.trim()||""):"";if(t)$("#pt").value="";pick(d.to,t)},
-  open:d=>openFile(d.key,d.name),
+  open:d=>openFile(d.key,d.name,d.mime),dl:d=>downloadFile(d.key,d.name),lk:d=>toggleLike(d.t),thread:d=>openThread(d.id),
+  rp:d=>{if(S.thread){S.thread.reply={id:d.c,name:d.n};renderThread();$("#ti")?.focus()}},rpx:()=>{if(S.thread){S.thread.reply=null;renderThread()}},
+  profile:d=>openProfile(d.uid),photo:pickPhoto,savebio:saveBio,
+  viewpic:d=>{const u=S.prof[d.uid]?.photo;if(u)viewer(userName(d.uid),`<img class="full" src="${esc(u)}" alt="">`,()=>downloadFile(u,"profile-photo.jpg"))},
   call:d=>startCall(d.type),answer:answerCall,hang:()=>endCall("ended"),
   mute:(d,b)=>toggleTrack("a",b,"mic","mic"),cam:(d,b)=>toggleTrack("v",b,"video","video"),flip:flipCam,screen:shareScreen,
   rec:()=>C?.rec?stopRec():startRec(),
